@@ -2,6 +2,7 @@
 #include <LoRa.h>
 #include <Wire.h>
 #include <Adafruit_SSD1306.h>
+#include <TinyGPS++.h>
 
 // LoRa Chip (SX1278) SPI
 #define SCK     5    // GPIO5  -- SX1278's SCK
@@ -19,6 +20,16 @@
 #define SCREEN_ADDRESS 0x3c
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
+// GPS Serial1
+TinyGPSPlus gps;
+HardwareSerial Serial1(1);
+
+void all_println(const char *msg) {
+  Serial.println(msg);
+  display.println(msg);
+  display.display();
+}
+
 void setup() {
   Serial.begin(115200);
 
@@ -31,28 +42,31 @@ void setup() {
   display.setTextSize(1);
   display.setTextColor(SSD1306_WHITE);
   display.setCursor(0,0);
-  display.display();
-  display.println("OLED OK");
-  Serial.println("OLED OK");
+  all_println("OLED OK");
 
-  Serial.println("LoRa...");
-  display.println("LoRa...");
-  display.display();
+  all_println("LoRa...");
   SPI.begin(SCK, MISO, MOSI, SS);
   LoRa.setPins(SS, RST, DI0);
   if(!LoRa.begin(BAND)) {
     Serial.println("LoRa init err");
     for(;;); // Loop forever
   }
-  Serial.println("LoRa OK");
-  display.println("LoRa OK");
-  display.display();
-  
-  Serial.println("OK");
-  display.println("OK");
-  display.display();
+  all_println("LoRa OK");
+
+  all_println("GPS interface...");
+  Serial1.begin(9600, SERIAL_8N1, 12, 15);
+  // T-Beam NEO GPS TX pin is 34 and RX pin is 12.
+  // These magical values were in official repo though
+  all_println("GPS interface OK");
+
+  all_println("OK");
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
+}
+
+void fetch_gps_data() {
+  while (Serial1.available()) {
+    gps.encode(Serial.read());
+  }
 }
